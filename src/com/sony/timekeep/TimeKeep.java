@@ -46,7 +46,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.os.SystemProperties;
+
+// import android.os.SystemProperties;
 
 public class TimeKeep extends BroadcastReceiver {
 	private static final String TAG = "TimeKeep-Receiver";
@@ -62,8 +63,7 @@ public class TimeKeep extends BroadcastReceiver {
 		long seconds = System.currentTimeMillis()/1000;
 		long epoch_since = readEpoch();
 		seconds -= epoch_since;
-
-		String currentAdjust = SystemProperties.get(TIMEADJ_PROP);
+		String currentAdjust = SystemProperties.get(TIMEADJ_PROP, "0");
 
 		Log.d(TAG, "Setting adjust property to " + seconds);
 		SystemProperties.set(TIMEADJ_PROP, Long.toString(seconds));
