@@ -1,0 +1,11 @@
+props {
+  owner: Vendor
+  module: "vendor.sony.sysprop.TimeKeepProperties"
+  prop {
+    api_name: "timeadjust"
+    type: Long
+    access: ReadWrite
+    scope: Internal
+    prop_name: "persist.vendor.timeadjust"
+  }
+}

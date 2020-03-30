@@ -1,0 +1,33 @@
+cc_binary {
+    name: "timekeep",
+    owner: "sony",
+    vendor: true,
+    init_rc: ["vendor/etc/init/timekeep.rc"],
+
+    srcs: [
+        "timekeep.cpp",
+    ],
+    shared_libs: [
+        "liblog",
+        "TimeKeepProperties",
+    ],
+}
+
+android_app {
+    name: "TimeKeep",
+    owner: "sony",
+    vendor: true,
+
+    certificate: "platform",
+    // TOOD: REMOVEME
+    privileged: true,
+    //platform_apis: true,
+    sdk_version: "system_current",
+
+    srcs: ["src/**/*.java"],
+    libs: ["TimeKeepProperties"],
+
+    optimize: {
+        enabled: false,
+    },
+}

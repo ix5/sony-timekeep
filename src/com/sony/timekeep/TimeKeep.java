@@ -46,14 +46,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.os.SystemProperties;
+
+import vendor.sony.sysprop.TimeKeepProperties;
 
 public class TimeKeep extends BroadcastReceiver {
 	private static final String TAG = "TimeKeep-Receiver";
-	private static final String TIMEADJ_PROP = "persist.vendor.timeadjust";
 	private static final String RTC_SINCE_EPOCH = "/sys/class/rtc/rtc0/since_epoch";
-	private static final String RTC_ATS_FILE = android.os.Build.VERSION.SDK_INT >= 26 ?
-		"/data/vendor/time/ats_2" : "/data/time/ats_2";
+	private static final String RTC_ATS_FILE = "/data/vendor/time/ats_2";
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
@@ -63,10 +62,11 @@ public class TimeKeep extends BroadcastReceiver {
 		long epoch_since = readEpoch();
 		seconds -= epoch_since;
 
-		String currentAdjust = SystemProperties.get(TIMEADJ_PROP);
+		Long previousAdjust = TimeKeepProperties.timeadjust().orElse((long) -1);
 
+		Log.d(TAG, "Previous time adjust: " + previousAdjust);
 		Log.d(TAG, "Setting adjust property to " + seconds);
-		SystemProperties.set(TIMEADJ_PROP, Long.toString(seconds));
+		TimeKeepProperties.timeadjust(seconds);
 		writeATS(seconds);
 	}
 

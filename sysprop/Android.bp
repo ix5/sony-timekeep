@@ -1,0 +1,14 @@
+// See https://source.android.com/devices/architecture/sysprops-apis
+sysprop_library {
+    name: "TimeKeepProperties",
+    srcs: ["TimeKeepProperties.sysprop"],
+    property_owner: "Vendor",
+    api_packages: ["android.sysprop"],
+    //vendor_available: true,
+    vendor: true,
+    // Pretty stupid that we have to set this, but:
+    // module "TimeKeepProperties_sysprop_library": None of soc_specific,
+    //   device_specific, product_specific is true.
+    //   System can't access sysprop_library owned by Vendor
+    //soc_specific: true,
+}

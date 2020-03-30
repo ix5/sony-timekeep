@@ -1,0 +1,8 @@
+props {
+  module: "vendor.sony.sysprop.TimeKeepProperties"
+  prop {
+    api_name: "timeadjust"
+    type: Long
+    prop_name: "persist.vendor.timeadjust"
+  }
+}

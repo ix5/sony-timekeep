@@ -29,6 +29,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -40,21 +41,15 @@
 
 #define LOG_TAG "TimeKeep"
 
-#include <cutils/properties.h>
-#if ANDROID_SDK_VERSION >= 26
 #include <log/log.h>
-#else
-#include <cutils/log.h>
-#endif
-#include <errno.h>
+
+#include <TimeKeepProperties.sysprop.h>
+
+using namespace vendor::sony::sysprop;
 
 #define RTC_SYS_FILE "/sys/class/rtc/rtc0/since_epoch"
-#if ANDROID_SDK_VERSION >= 26
 #define RTC_ATS_FILE "/data/vendor/time/ats_2"
-#else
-#define RTC_ATS_FILE "/data/time/ats_2"
-#endif
-#define TIME_ADJUST_PROP "persist.vendor.timeadjust"
+#define TIME_ADJUST_PROP "persist.vendor.timeadjust" // TODO: DELETEME
 
 int read_epoch(unsigned long long* epoch) {
 	int res = 0;
@@ -97,8 +92,8 @@ void restore_ats(uint64_t value) {
 	}
 }
 
+/* Unused... */
 int store_time() {
-	char prop[PROPERTY_VALUE_MAX];
 	unsigned long long seconds = 0;
 	unsigned long long epoch_since = 0;
 	int res = -1;
@@ -116,11 +111,15 @@ int store_time() {
 			ALOGI("Failed to read epoch while storing");
 		} else {
 			seconds -= epoch_since;
-			snprintf(prop, PROPERTY_VALUE_MAX, "%llu", seconds);
 			restore_ats(seconds);
-			property_set(TIME_ADJUST_PROP, prop);
-			ALOGI("Time adjustment stored to property");
-			res = 0;
+            if (!TimeKeepProperties::timeadjust((int64_t)seconds)) {
+                ALOGI("Failed to store time adjustment to property! %s",
+                      strerror(errno));
+                res = -1;
+            } else {
+                ALOGI("Time adjustment stored to property");
+                res = 0;
+            }
 		}
 	}
 
@@ -133,22 +132,14 @@ int restore_time() {
 	unsigned long long time_adjust = 0;
 	unsigned long long epoch_since = 0;
 	int res = -1;
-	char prop[PROPERTY_VALUE_MAX];
-	memset(prop, 0x0, PROPERTY_VALUE_MAX);
-	property_get(TIME_ADJUST_PROP, prop, "0");
 
-	if (strcmp(prop, "0") != 0) {
-		char *endp = NULL;
-		time_adjust = strtoull(prop, &endp, 10);
-		if (*endp != '\0') {
-			ALOGI("Property in " TIME_ADJUST_PROP
-			      " is not valid: %s (%d)", prop, errno);
-			return res;
-		}
-	} else {
-		ALOGI("No time adjust value found for restore");
-		return res;
-	}
+    // TODO: Fix, instead using long long?
+    std::optional<std::int64_t> timeadjust_prop =
+        TimeKeepProperties::timeadjust().value_or(-1);
+
+    if (timeadjust_prop < 0) {
+		ALOGE("Error reading " TIME_ADJUST_PROP);
+    }
 
 	res = read_epoch(&epoch_since);
 	if (res < 0) {
@@ -176,8 +167,6 @@ int main(int argc, char* argv[]) {
 		ALOGI("usage: timekeep store|restore");
 		return res;
 	}
-
-	// Keep CAP_SYS_TIME and drop to system user
 
 	if (strcmp(argv[1], "store") == 0) {
 		res = store_time();
